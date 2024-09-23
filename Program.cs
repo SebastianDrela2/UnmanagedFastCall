@@ -20,7 +20,7 @@ partial class Program
         var result = compiledMachineCode.CodeDelegate();
 
         Console.WriteLine($"Actual result of {nameof(MyMagicManagedMethod)} is {result}");
-        Console.WriteLine(builder.InstructionText);
+        Console.WriteLine(builder.AssemblyText);
     }
 
     private static int MyMagicManagedMethod(int a, int b)
