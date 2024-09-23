@@ -1,5 +1,4 @@
 ﻿using ConsoleApp7;
-using System.Runtime.InteropServices;
 
 partial class Program
 {
