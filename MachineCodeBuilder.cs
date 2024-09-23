@@ -3,15 +3,15 @@ using System.Runtime.InteropServices;
 
 namespace ConsoleApp7;
 
-internal partial class MachineCodeBuilder<TResultDelegate> where TResultDelegate : Delegate
+internal class MachineCodeBuilder<TResultDelegate> where TResultDelegate : Delegate
 {
     public string AssemblyText => GetAssemblyText();   
    
-    public List<MachineCodeLine> Instructions = [];
+    private List<MachineCodeLine> _instructions = [];
 
     public void AddInstruction(byte[] byteLine, string assemblyText, string description)
     {
-        Instructions.Add(new MachineCodeLine(byteLine, assemblyText, description));
+        _instructions.Add(new MachineCodeLine(byteLine, assemblyText, description));
     }
 
     public void AddProlog()
@@ -60,11 +60,11 @@ internal partial class MachineCodeBuilder<TResultDelegate> where TResultDelegate
 
     private byte[] GetArrayBytes()
     {
-        return Instructions.SelectMany(x => x.Bytes).ToArray();
+        return _instructions.SelectMany(x => x.Bytes).ToArray();
     }
 
     private string GetAssemblyText()
     {
-       return string.Join("\n", Instructions.Select(x => x.ToString()));
+       return string.Join("\n", _instructions.Select(x => x.ToString()));
     }  
 }
