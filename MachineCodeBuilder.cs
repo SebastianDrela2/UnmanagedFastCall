@@ -33,7 +33,7 @@ internal partial class MachineCodeBuilder<TResultDelegate> where TResultDelegate
         long funcAddr = functionPointer.ToInt64();
 
         AddInstruction([0x48, 0xB8, ..BitConverter.GetBytes(funcAddr)], 
-            $"mov rax, <{functionName}>", "Move 64-bit address (function pointer) into RAX");
+            $"mov  rax, <{functionName}>", "Move 64-bit address (function pointer) into RAX");
     }
 
     public CompiledMachineCode<TResultDelegate> Compile()

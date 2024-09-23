@@ -24,6 +24,7 @@ partial class Program
         var result = compiledMachineCode.CodeDelegate();
 
         Console.WriteLine($"Actual result of {nameof(MyMagicManagedMethod)} is {result}");
+        Console.WriteLine();
         Console.WriteLine(builder.AssemblyText);
     }
 
@@ -32,7 +33,9 @@ partial class Program
         var sum = a + b;
 
         Console.WriteLine("Jumped to managed method!");
+        Console.WriteLine();
         Console.WriteLine($"Added {a} and {b} result {sum}?");
+        Console.WriteLine();
         return sum;
     }
 }
