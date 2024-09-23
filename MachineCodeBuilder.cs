@@ -14,6 +14,18 @@ internal partial class MachineCodeBuilder<TResultDelegate> where TResultDelegate
         Instructions.Add(new MachineCodeLine(byteLine, assemblyText, description));
     }
 
+    public void AddProlog()
+    {
+        AddInstruction([0x48, 0x83, 0xEC, 0x20], "sub  rsp, 0x20", "Allocate 32 bytes shadow space");
+        AddInstruction([0x48, 0x83, 0xEC, 0x08], "sub  rsp, 0x08", "Align to next 16 bytes, previous call added 8 bytes");
+    }
+    
+    public void AddEpilog()
+    {
+       AddInstruction([0x48, 0x83, 0xC4, 0x28], "add  rsp, 0x28", "Restore stack (shadow space, alignment)");
+       AddInstruction([0xC3]                  , "ret"           , "Return");
+    }
+
     public void SetRax<TCallDelegate>(TCallDelegate callDelegate, 
         [CallerArgumentExpression(nameof(callDelegate))]string? functionName = null) where TCallDelegate : Delegate
     {
