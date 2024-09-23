@@ -1,72 +1,35 @@
-﻿using System.Runtime.InteropServices;
+﻿using ConsoleApp7;
+using System.Runtime.InteropServices;
 
 partial class Program
 {
+    internal delegate int MyUnmanagedDelegate();
+    internal delegate int MyManagedDelegate(int a, int b);
     internal static unsafe void Main(string[] args)
-    {
-        IntPtr memory = VirtualAlloc(
-            IntPtr.Zero, 
-            64, 
-            AllocationType.Commit |
-            AllocationType.Reserve, 
-            PAGE_PROTECTION_FLAGS.PAGE_EXECUTE_READWRITE);
+    {             
+        var mcWriter = new MachineCodeBuilder<MyUnmanagedDelegate>();        
+        mcWriter.AddInstruction([0x48, 0x83, 0xEC, 0x28],       "sub rsp, 0x28", "Align stack (16-byte alignment)");       
+        mcWriter.SetRax<MyManagedDelegate>(MyMagicManagedMethod);
+        mcWriter.AddInstruction([0xB9, 0x05, 0x00, 0x00, 0x00], "mov ecx, 0x05" , "Move to ecx 5");
+        mcWriter.AddInstruction([0xBA, 0x0A, 0x00, 0x00, 0x00], "mov edx, 0x0A", "Move to edx 10");
+        mcWriter.AddInstruction([0xFF, 0xD0],                   "call rax"     , "Call the function pointer in RAX");
+        mcWriter.AddInstruction([0x83, 0xC0, 0x64],             "add eax, 0x64", "Add eax 100");
+        mcWriter.AddInstruction([0x48, 0x83, 0xC4, 0x28],       "add rsp, 0x28", "Restore stack");
+        mcWriter.AddInstruction([0xC3],                         "ret"          , "Return");
 
-        if (memory == IntPtr.Zero)
-        {
-            Console.WriteLine("Memory allocation failed");
-            return;
-        }
+        using var compiledMachineCode = mcWriter.Compile();
+        var result = compiledMachineCode.CodeDelegate();
 
-        byte[] machineCode =
-        [
-            0x48, 0x83, 0xEC, 0x28,                         // sub rsp, 0x28       ; Align stack (16-byte alignment)
-            0x48, 0xB8,                                     // mov rax, <address>  ; Move 64-bit address (function pointer) into RAX
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Placeholder for the function pointer (64-bit address)
-            0xFF, 0xD0,                                     // call rax            ; Call the function pointer in RAX
-            0x48, 0x83, 0xC4, 0x28,                         // add rsp, 0x28       ; Restore stack
-            0xC3                                            // ret                 ; Return
-        ];
-
-        IntPtr functionPointer = Marshal.GetFunctionPointerForDelegate(MyManagedMethod);
-        long funcAddr = functionPointer.ToInt64();
-
-        Buffer.BlockCopy(BitConverter.GetBytes(funcAddr), 0, machineCode, 6, 8);
-        Marshal.Copy(machineCode, 0, memory, machineCode.Length);
-
-        var codeDelegate = Marshal.GetDelegateForFunctionPointer<Action>(memory);
-        codeDelegate();
-
-        VirtualFree(memory, 0, FreeType.Release);
+        Console.WriteLine($"Actual result of {nameof(MyMagicManagedMethod)} is {result}");
+        Console.WriteLine(mcWriter.InstructionText);
     }
 
-    private static void MyManagedMethod()
+    private static int MyMagicManagedMethod(int a, int b)
     {
+        var sum = a + b;
+
         Console.WriteLine("Jumped to managed method!");
-    }
-
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    private static partial IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, AllocationType flAllocationType, PAGE_PROTECTION_FLAGS flProtect);
-
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool VirtualFree(IntPtr lpAddress, uint dwSize, FreeType dwFreeType);
-
-    [Flags]
-    public enum AllocationType : uint
-    {
-        Commit = 0x1000,
-        Reserve = 0x2000,
-    }
-
-    [Flags]
-    public enum PAGE_PROTECTION_FLAGS : uint
-    {
-        PAGE_EXECUTE_READWRITE = 0x40
-    }
-
-    [Flags]
-    public enum FreeType : uint
-    {
-        Release = 0x8000,
+        Console.WriteLine($"Added {a} and {b} result {sum}?");
+        return sum;
     }
 }
